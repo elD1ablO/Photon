@@ -8,10 +8,10 @@ using System.Linq;
 public class GameManager : MonoBehaviourPunCallbacks
 {
     [Header("Stats")]
-    [SerializeField] bool gameEnded = false;
-    [SerializeField] float timeToWin;
-    [SerializeField] float invincibleDuration;
-    [SerializeField] float hatPickupTime;
+    public bool gameEnded = false;
+    public float timeToWin;
+    public float invincibleDuration;
+    public float hatPickupTime;
 
     [Header("Players")]
     public string playerPrefabLocation;
@@ -55,5 +55,53 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         //initialize the player
         playerScript.photonView.RPC("Initialize", RpcTarget.All, PhotonNetwork.LocalPlayer);
+    }
+
+    public PlayerController GetPlayer(int playerId)
+    {
+        return players.First(x => x.id == playerId);
+    }
+
+    public PlayerController GetPlayer(GameObject playerObj)
+    {
+        return players.First(x => x.gameObject == playerObj);
+    }
+
+    //called when player hits hatted player and gives away the hat
+    [PunRPC]
+    public void GiveHat(int playerId, bool initialGive)
+    {
+        if (!initialGive)
+        {
+            GetPlayer(playerWithHat).SetHat(false);
+        }
+
+        playerWithHat = playerId;
+        GetPlayer(playerId).SetHat(true);
+        hatPickupTime = Time.time;
+    }
+
+    public bool CanGetHat()
+    {
+        if (Time.time > hatPickupTime + invincibleDuration)
+            return true;
+        else
+            return false;
+    }    
+
+    [PunRPC]
+    void WinGame(int playerId)
+    {
+        gameEnded = true;
+        PlayerController player = GetPlayer(playerId);
+        GameUI.instance.SetWinText(player.photonPlayer.NickName);
+
+        Invoke("GoBackToMenu", 3f);
+    }
+
+    void GoBackToMenu()
+    {
+        PhotonNetwork.LeaveRoom();
+        NetworkManager.instance.ChangeScene("Menu");
     }
 }

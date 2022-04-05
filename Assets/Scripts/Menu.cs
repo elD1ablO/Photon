@@ -81,7 +81,7 @@ public class Menu : MonoBehaviourPunCallbacks
         // display all players currently in lobby
         foreach(Player player in PhotonNetwork.PlayerList)
         {
-            playerListText.text += player.NickName + "/n";
+            playerListText.text += player.NickName + "\n";
         }
 
         //only the host can start the game
